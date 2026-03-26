@@ -6,6 +6,7 @@ const morgan = require("morgan");
 
 app.use(express.json());
 app.use(morgan("tiny"));
+app.use(express.static("dist"));
 
 let data = [
     { 
