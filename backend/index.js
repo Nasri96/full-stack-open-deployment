@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const morgan = require("morgan");
+const Person = require("./models/person");
 
 
 
@@ -31,14 +32,11 @@ let data = [
     }
 ]
 
-const generateId = () => {
-    return String(Math.floor(Math.random() * 100000 + 1));
-}
-
-
 // routes
 app.get("/api/persons", (request, response) => {
-    response.json(data);
+    Person.find({}).then(persons => {
+        response.json(persons);
+    });
 });
 
 app.post("/api/persons", (request, response) => {
@@ -48,21 +46,14 @@ app.post("/api/persons", (request, response) => {
         return response.status(400).json({error: "name and number can not be empty"})
     }
 
-    const nameInvalid = data.some(p => p.name === name); // if name exists, it is not valid
-   
-    if(nameInvalid) {
-        return response.status(400).json({error: "name must be unique"});
-    }
-    
-    const newPerson = {
-        id: generateId(),
+    const addedPerson = new Person({
         name,
         number
-    }
+    })
 
-    data = data.concat(newPerson);
-
-    response.status(201).json(newPerson);
+    addedPerson.save().then(savedPerson => {
+        response.status(201).json(savedPerson);
+    })
 })
 
 app.get("/info", (request, response) => {
