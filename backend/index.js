@@ -57,39 +57,87 @@ app.post("/api/persons", (request, response) => {
 })
 
 app.get("/info", (request, response) => {
-    const infoLength = data.length;
     const time = new Date().toString();
-
-    response.send(`
-        <p>Phonebook has info for ${infoLength} people</p>
-        <p>${time}</p>
-        `);
+    Person.find({})
+        .then(persons => {
+            response.send(`
+                <p>Phonebook has info for ${persons.length} people</p>
+                <p>${time}</p>
+                `)
+        })
 });
 
-app.get("/api/persons/:id", (request, response) => {
+app.get("/api/persons/:id", (request, response, next) => {
     const id = request.params.id;
-    const person = data.find(p => p.id === id);
+    
+    Person.findById(id)
+        .then(person => {
+            if(!person) {
+                return response.status(404).end();
+            }
 
-    if(!person) {
-        return response.status(404).json({error: "not found"});
-    }
-
-    response.json(person);
+            response.json(person);
+        })
+        .catch(error => next(error))
 })
 
-app.delete("/api/persons/:id", (request, response) => {
+app.put("/api/persons/:id", (request, response, next) => {
     const id = request.params.id;
-    const personToDelete = data.find(p => p.id == id);
+    const { number } = request.body;
+    
+    Person.findById(id)
+        .then(person => {
+            if(!person) {
+                console.log("not found!");
+                return response.status(404).end();
+            }
 
-    if(!personToDelete) {
-        return response.status(404).json({error: "not found"});
-    }
+            person.number = number;
 
-    data = data.filter(p => p.id !== id);
+            return person.save().then(updatedPerson => {
+                response.json(updatedPerson);
+            })
 
-    response.json(personToDelete);
+        })
+        .catch(error => {
+            next(error);
+        })
 })
 
+app.delete("/api/persons/:id", (request, response, next) => {
+    const id = request.params.id;
+
+    Person.findByIdAndDelete(id)
+        .then(deleted => {
+            if(!deleted) {
+                console.log("not found!");
+                return response.status(404).end();
+            }
+            response.json(deleted);
+        })
+        .catch(error => {
+            next(error);
+        })
+})
+
+
+function unknownEndpoint(request, response, next) {
+    response.json({ error: "unknown endpoint" });
+}
+
+function errorHandler(error, request, response, next) {
+    console.log("error type: ", error.name);
+    console.log("error message: ", error.message);
+
+    if(error.name === "CastError") {
+        return response.status(400).send({ error: "invalid id" });
+    }
+
+    next(error);
+}
+
+app.use(unknownEndpoint);
+app.use(errorHandler);
 
 const PORT = process.env.port || 3001;
 app.listen(PORT, () => {
