@@ -13,8 +13,24 @@ mongoose.connect(url, { family: 4 })
 
 
 const personSchema = new mongoose.Schema({
-    name: String,
-    number: String
+    name: {
+        type: String,
+        minLength: 3,
+        required: true
+    },
+    number: {
+        type: String,
+        minLength: 8,
+        validate: {
+            validator: (v) => {
+                return /^(\d{2,3})-(\d{6})$/.test(v);
+            },
+            message: (props) => {
+                return `${props.value} is not a valid number. (11/111)-(1234567) is a valid format.`;
+            }
+        }
+
+    }
 })
 
 personSchema.set("toJSON", {

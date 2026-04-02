@@ -39,7 +39,7 @@ app.get("/api/persons", (request, response) => {
     });
 });
 
-app.post("/api/persons", (request, response) => {
+app.post("/api/persons", (request, response, next) => {
     const { name, number } = request.body;
 
     if(!name || !number) {
@@ -51,9 +51,11 @@ app.post("/api/persons", (request, response) => {
         number
     })
 
-    addedPerson.save().then(savedPerson => {
-        response.status(201).json(savedPerson);
-    })
+    addedPerson.save()
+        .then(savedPerson => {
+            response.status(201).json(savedPerson);
+        })
+        .catch(error => next(error))
 })
 
 app.get("/info", (request, response) => {
@@ -94,12 +96,14 @@ app.put("/api/persons/:id", (request, response, next) => {
 
             person.number = number;
 
-            return person.save().then(updatedPerson => {
-                response.json(updatedPerson);
-            })
+            return person.save()
+                .then(updatedPerson => {
+                    response.json(updatedPerson);
+                })
 
         })
         .catch(error => {
+            console.log("catching put error here")
             next(error);
         })
 })
@@ -131,6 +135,8 @@ function errorHandler(error, request, response, next) {
 
     if(error.name === "CastError") {
         return response.status(400).send({ error: "invalid id" });
+    } else if(error.name === "ValidationError") {
+        return response.status(400).send({ error: error.message });
     }
 
     next(error);
