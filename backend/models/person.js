@@ -26,7 +26,7 @@ const personSchema = new mongoose.Schema({
                 return /^(\d{2,3})-(\d{6})$/.test(v);
             },
             message: (props) => {
-                return `${props.value} is not a valid number. (11/111)-(1234567) is a valid format.`;
+                return `${props.value} is not a valid number. NN/NNN-NNNNNN is a valid format.`;
             }
         }
 
